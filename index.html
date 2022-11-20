@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Torrent inspector</title>
+</head>
+<body>
+<div id="upload">
+    <input type="file" id="file" accept=".torrent">
+    <button onclick="upload()">Upload torrent</button>
+</div>
+
+<div id="display"></div>
+
+<style>
+    table, tr, td {
+        border: 1px solid black;
+    }
+
+    #display {
+        margin-top: 1em;
+    }
+</style>
+
+<script>
+    async function upload() {
+        const file = document.querySelector("#file");
+        const form = new FormData();
+        form.append("file", file.files[0])
+
+        const response = await fetch("/torrent", {method: "POST", body: form});
+        const data = JSON.parse(await response.text());
+        if (data.type === "success") {
+            console.log(data.data);
+            const display = document.querySelector("#display");
+            let html = "<table>";
+
+            function addRow(key, value) {
+                html += `<tr><td>${key}</td><td>${value}</td></tr>`
+            }
+
+            addRow("Announce", data.data.announce);
+            addRow("Name", data.data.info.name);
+            addRow("Creation Date", new Date(data.data['creation date'] * 1000));
+            addRow("Files", data.data.info.files.map(file => file.path.join("/")).join("<br>"));
+
+            // FIXME: do not use innerHTML in production
+            display.innerHTML = html;
+        } else {
+            alert(data.data);
+        }
+    }
+</script>
+</body>
+</html>
